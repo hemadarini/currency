@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LSTM Currency Prediction</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        // Function to get the CSRF token from the cookie
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        $(document).ready(function() {
+            const csrftoken = getCookie('csrftoken');
+
+            $('#predictForm').on('submit', function(event) {
+                event.preventDefault();
+                $.ajax({
+                    url: '/predict/',
+                    type: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrftoken
+                    },
+                    data: $(this).serialize(),
+                    success: function(response) {
+                        if (response.predictions) {
+                            $('#predictions').html(response.predictions.join(', '));
+                        } else if (response.error) {
+                            $('#predictions').html(response.error);
+                        }
+                    }
+                });
+            });
+        });
+
+    </script>
+</head>
+<body>
+    <h1>Currency Price Prediction</h1>
+    <form id="predictForm" method="POST">
+        {% csrf_token %}
+        <label for="data">Enter historical prices (comma-separated):</label><br>
+        <input type="text" id="data" name="data" required><br><br>
+        <input type="submit" value="Predict">
+    </form>
+    <h2>Predictions:</h2>
+    <div id="predictions"></div>
+</body>
+</html>
